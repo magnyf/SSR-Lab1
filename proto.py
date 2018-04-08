@@ -18,7 +18,7 @@ def mfcc(samples, winlen = 400, winshift = 200, preempcoeff=0.97, nfft=512, ncep
     Returns:
         N x nceps array with lifetered MFCC coefficients
     """
-    frames = enframe(samples, winlen, winshift)
+    frames = enframe(samples, winlen, winshift, samplingrate)
     preemph = preemp(frames, preempcoeff)
     windowed = windowing(preemph)
     spec = powerSpectrum(windowed, nfft)
@@ -28,7 +28,7 @@ def mfcc(samples, winlen = 400, winshift = 200, preempcoeff=0.97, nfft=512, ncep
 
 # Functions to be implemented ----------------------------------
 
-def enframe(samples, winlen, winshift):
+def enframe(samples, winlen, winshift, samplingrate):
     """
     Slices the input samples into overlapping windows.
 
@@ -39,6 +39,11 @@ def enframe(samples, winlen, winshift):
         numpy array [N x winlen], where N is the number of windows that fit
         in the input signal
     """
+    winlenPoints = winlen*samplingrate
+    winshiftPoints = winshift*samplingrate
+    
+    return  [samples[x:x+winlenPoints] for x in range(0, len(samples)-winlenPoints, winshiftPoints)]
+
     
 def preemp(input, p=0.97):
     """
@@ -53,6 +58,12 @@ def preemp(input, p=0.97):
         output: array of pre-emphasised speech samples
     Note (you can use the function lfilter from scipy.signal)
     """
+    N = len(input[0])
+    b = np.array([1.0 - p for i in range(N)])
+    b[0] = 1.
+    a = np.array([1. for i in range(N)])
+    return [ lfilter(b,a, frames[i]) for i in range(len(frames))]
+
 
 def windowing(input):
     """
@@ -67,6 +78,10 @@ def windowing(input):
     if you want to get the same results as in the example)
     """
 
+    hammingWindow = np.array(scipy.signal.hamming(len(input[0]), sym=False))
+    windowed =  [np.multiply(x, hammingWindow) for x in input]
+    return windowed
+    
 def powerSpectrum(input, nfft):
     """
     Calculates the power spectrum of the input signal, that is the square of the modulus of the FFT
@@ -80,6 +95,12 @@ def powerSpectrum(input, nfft):
     Note: you can use the function fft from scipy.fftpack
     """
 
+    N = len(input)
+    output = [ sp.fftpack.fft(entree[i], nfft) for i in range(N)]
+    output = [ abs(output[i])**2 for i in range(N)]
+    return output
+
+    
 def logMelSpectrum(input, samplingrate):
     """
     Calculates the log output of a Mel filterbank when the input is the power spectrum
@@ -95,6 +116,15 @@ def logMelSpectrum(input, samplingrate):
           nmelfilters
     """
 
+    nfft = len(input[0])
+    mspecFilters = trfbank(samplingrate, nfft)
+    mspec = np.matmul(input, np.transpose(mspecFilters))
+    for i in range(len(mspec)):
+        for j in range(len(mspec[i])):
+            mspec[i][j] = math.log(mspec[i][j])
+    return mspec
+
+            
 def cepstrum(input, nceps):
     """
     Calulates Cepstral coefficients from mel spectrum applying Discrete Cosine Transform
@@ -107,6 +137,9 @@ def cepstrum(input, nceps):
         array of Cepstral coefficients [N x nceps]
     Note: you can use the function dct from scipy.fftpack.realtransforms
     """
+
+    return  [dct(input[i],type=2, norm='ortho', axis= -1)[ :nceps] for i in range(len(input))]  
+
 
 def dtw(x, y, dist):
     """Dynamic Time Warping.
