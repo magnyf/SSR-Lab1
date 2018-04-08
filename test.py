@@ -220,3 +220,72 @@ lmfcc = lifter(mfcc)
 # pl.pcolormesh(example['lmfcc'])
 # pl.show()
 
+def dist(x, y):
+    assert len(y) == len(x)
+    return math.sqrt(np.sum([(y[i] - x[i])**2 for i in range(len(x))]))
+
+def dist2(x,y):
+    if x==y:
+        return 0
+    return 1
+
+def traceback(D):
+    i, j = np.array(D.shape) - 1
+    p, q = [i], [j]
+    while (i > 0 and j > 0):
+        tb = np.argmin((D[i-1, j-1], D[i-1, j], D[i, j-1]))
+
+        if (tb == 0):
+            i = i - 1
+            j = j - 1
+        elif (tb == 1):
+            i = i - 1
+        elif (tb == 2):
+            j = j - 1
+
+        p.insert(0, i)
+        q.insert(0, j)
+
+
+    return [(p[i], q[i]) for i in range(len(p)) ]
+
+
+def dtw(x, y, dist):
+    assert len(x)
+    assert len(y)
+    N, M = len(x), len(y)
+    D0 = np.zeros((N + 1,M+ 1))
+    D0[0, 1:] = np.inf
+    D0[1:, 0] = np.inf
+    D1 = D0[1:, 1:] # view
+    for i in range(N):
+        for j in range(M):
+            D1[i, j] = dist(x[i], y[j])
+    C = D1.copy()
+    for i in range(N):
+        for j in range(M):
+            D1[i, j] += min(D0[i, j], D0[i, j+1], D0[i+1, j])
+    if len(x)==1:
+        path = np.zeros(len(y)), range(len(y))
+    elif len(y) == 1:
+        path = range(len(x)), no.zeros(len(x))
+    else:
+        path = traceback(D0)
+#    return D1[-1, -1] , C, D1, path
+    return D1[-1, -1] / sum(D1.shape), C, D0, path
+
+
+
+
+x = [['A'],['L'],['L'],['D'],['R'],['I'],['G']]
+y = [['A'],['L'],['L'],['T'],['I'],['D']]
+
+res, locD, accD, path = dtw(x,y,dist2)
+print("La distance entre les deux est:")
+print (res)
+print("La disctance locale est de:")
+print(locD)
+print("La distance cumulee est de:")
+print(accD)
+print("le chemin a prendre est:")
+print(path)
