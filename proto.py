@@ -1,5 +1,13 @@
 # DT2119, Lab 1 Feature Extraction
 
+import numpy as np
+import scipy.signal
+import scipy.fftpack
+from scipy.fftpack.realtransforms import dct
+import math
+
+from tools import *
+
 # Function given by the exercise ----------------------------------
 
 def mfcc(samples, winlen = 400, winshift = 200, preempcoeff=0.97, nfft=512, nceps=13, samplingrate=20000, liftercoeff=22):
@@ -18,7 +26,7 @@ def mfcc(samples, winlen = 400, winshift = 200, preempcoeff=0.97, nfft=512, ncep
     Returns:
         N x nceps array with lifetered MFCC coefficients
     """
-    frames = enframe(samples, winlen, winshift, samplingrate)
+    frames = enframe(samples, winlen, winshift)
     preemph = preemp(frames, preempcoeff)
     windowed = windowing(preemph)
     spec = powerSpectrum(windowed, nfft)
@@ -28,7 +36,7 @@ def mfcc(samples, winlen = 400, winshift = 200, preempcoeff=0.97, nfft=512, ncep
 
 # Functions to be implemented ----------------------------------
 
-def enframe(samples, winlen, winshift, samplingrate):
+def enframe(samples, winlen, winshift):
     """
     Slices the input samples into overlapping windows.
 
@@ -38,11 +46,8 @@ def enframe(samples, winlen, winshift, samplingrate):
     Returns:
         numpy array [N x winlen], where N is the number of windows that fit
         in the input signal
-    """
-    winlenPoints = winlen*samplingrate
-    winshiftPoints = winshift*samplingrate
-    
-    return  [samples[x:x+winlenPoints] for x in range(0, len(samples)-winlenPoints, winshiftPoints)]
+    """    
+    return  [samples[x:x+winlen] for x in range(0, len(samples)-winlen, winshift)]
 
     
 def preemp(input, p=0.97):
@@ -62,7 +67,7 @@ def preemp(input, p=0.97):
     b = np.array([1.0 - p for i in range(N)])
     b[0] = 1.
     a = np.array([1. for i in range(N)])
-    return [ lfilter(b,a, frames[i]) for i in range(len(frames))]
+    return [ scipy.signal.lfilter(b,a, input[i]) for i in range(len(input))]
 
 
 def windowing(input):
@@ -96,7 +101,7 @@ def powerSpectrum(input, nfft):
     """
 
     N = len(input)
-    output = [ sp.fftpack.fft(entree[i], nfft) for i in range(N)]
+    output = [ scipy.fftpack.fft(input[i], nfft) for i in range(N)]
     output = [ abs(output[i])**2 for i in range(N)]
     return output
 
@@ -138,7 +143,7 @@ def cepstrum(input, nceps):
     Note: you can use the function dct from scipy.fftpack.realtransforms
     """
 
-    return  [dct(input[i],type=2, norm='ortho', axis= -1)[ :nceps] for i in range(len(input))]  
+    return  np.array([dct(input[i],type=2, norm='ortho', axis= -1)[ :nceps] for i in range(len(input))])
 
 
 def dtw(x, y, dist):
