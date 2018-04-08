@@ -73,9 +73,13 @@ link = scipy.cluster.hierarchy.linkage(distanceUtterances, method='complete')
 # scipy.cluster.hierarchy.dendrogram(link, labels=tidigit2labels(data))
 # pl.show()
 
-mfccData = [mfcc(element['samples']) for element in data]
-print(mfccData)
-for n in [4]:#,8,16,32]:
+
+for n in [32]:
 	g = mixture.GaussianMixture(n_components=n)
-	g.fit(mfccData)
-	print(g.predict_proba(mfccData[16]))
+	g.fit(dataMfcc)
+	for i in [16,17,24,38,39]:
+		result = []
+		pl.pcolormesh(g.predict_proba(mfcc(data[i]['samples'])))
+		pl.colorbar()
+		pl.show()
+
