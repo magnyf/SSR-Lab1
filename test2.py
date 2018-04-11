@@ -73,13 +73,40 @@ link = scipy.cluster.hierarchy.linkage(distanceUtterances, method='complete')
 # scipy.cluster.hierarchy.dendrogram(link, labels=tidigit2labels(data))
 # pl.show()
 
+# to plot with the same coefficient
+#for n in [32]:
+#	g = mixture.GaussianMixture(n_components=n)
+#	g.fit(dataMfcc)
+   #     pl.figure(1)
+  #      pl.title("Word \"seven\" with 32 component")
+ #       j = 1
+#	for i in [16,17,24,38,39]:
+#		result = []
+  #              if (i!= 24):
+ #                       pl.subplot(3,2,j)
+#		        pl.pcolormesh(g.predict_proba(mfcc(data[i]['samples'])))
+#                        pl.title("\"seven\" nb "+ str( i))
+#		        pl.colorbar()
+#                        j = j + 1
+#                else:
+#                        pl.subplot(3,2,5)
+#                        pl.pcolormesh(g.predict_proba(mfcc(data[i]['samples'])))
+#                        pl.title("\"zero\" nb "+str(i))
+#        pl.show()
 
-for n in [32]:
+
+
+# to plot with the same word (diff coefficient)
+pl.figure(1)
+pl.title("Word \"seven\" nb 16")
+j = 1
+for n in [4,8,16,32]:
 	g = mixture.GaussianMixture(n_components=n)
 	g.fit(dataMfcc)
-	for i in [16,17,24,38,39]:
-		result = []
-		pl.pcolormesh(g.predict_proba(mfcc(data[i]['samples'])))
-		pl.colorbar()
-		pl.show()
-
+	result = []
+        pl.subplot(2,2,j)
+	pl.pcolormesh(g.predict_proba(mfcc(data[16]['samples'])))
+        pl.title("\"seven\" with  "+ str( n ) + " coefficients")
+	pl.colorbar()
+        j = j + 1
+pl.show()
